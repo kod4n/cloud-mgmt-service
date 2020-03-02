@@ -1,9 +1,9 @@
-# dropwizard-groovy-template
+# cloud-mgmt-service
 [![License](http://img.shields.io/badge/license-APACHE-blue.svg?style=flat)](http://choosealicense.com/licenses/apache-2.0/)
 [![SemVer](http://img.shields.io/badge/semver-2.0.0-blue.svg?style=flat)](http://semver.org/spec/v2.0.0)
-[![Download](https://api.bintray.com/packages/cratekube/maven/dropwizard-groovy-template-client/images/download.svg)](https://bintray.com/cratekube/maven/dropwizard-groovy-template-client/_latestVersion)
-[![Build Status](https://travis-ci.com/cratekube/dropwizard-groovy-template.svg?branch=master)](https://travis-ci.com/cratekube/dropwizard-groovy-template)
-[![Coverage Status](https://coveralls.io/repos/github/cratekube/dropwizard-groovy-template/badge.svg?branch=master)](https://coveralls.io/github/cratekube/dropwizard-groovy-template?branch=master)
+[![Download](https://api.bintray.com/packages/cratekube/maven/cloud-mgmt-service-client/images/download.svg)](https://bintray.com/cratekube/maven/cloud-mgmt-service-client/_latestVersion)
+[![Build Status](https://travis-ci.com/cratekube/cloud-mgmt-service.svg?branch=master)](https://travis-ci.com/cratekube/cloud-mgmt-service)
+[![Coverage Status](https://coveralls.io/repos/github/cratekube/cloud-mgmt-service/badge.svg?branch=master)](https://coveralls.io/github/cratekube/cloud-mgmt-service?branch=master)
 
 A template repository for Dropwizard Groovy applications
 
@@ -23,7 +23,7 @@ to avoid downloading a local distribution.  The commands below are helpful for b
 
 After you have generated the fat jar you can run your application with java using:
 ```bash
-java -jar build/libs/dropwizard-groovy-template-1.0.0-SNAPSHOT-all.jar
+java -jar build/libs/cloud-mgmt-service-1.0.0-SNAPSHOT-all.jar
 ```
 
 ### Docker builds
@@ -47,14 +47,14 @@ client.  To use the client provide the following dependency in your project:
 
 Gradle:
 ```groovy
-implementation 'io.cratekube:dropwizard-groovy-template:1.0.0'
+implementation 'io.cratekube:cloud-mgmt-service:1.0.0'
 ``` 
 
 Maven:
 ```xml
 <dependency>
   <groupId>io.cratekube</groupId>
-  <artifactId>dropwizard-groovy-template</artifactId>
+  <artifactId>cloud-mgmt-service</artifactId>
   <version>1.0.0</version>
 </dependency>
 ```
