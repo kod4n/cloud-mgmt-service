@@ -18,6 +18,7 @@
 !Dockerfile
 !app.yml
 !entrypoint.sh
+!docs*
 
 !LICENSE
 !*.md
