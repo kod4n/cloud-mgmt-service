@@ -11,5 +11,7 @@ logging:
     io.cratekube: DEBUG
     org.reflections: ERROR
 
+provider: ${CLOUD_PROVIDER:-aws}
+
 swagger:
-  resourcePackage: io.cratekube.example.resources
+  resourcePackage: io.cratekube.cloud.resources

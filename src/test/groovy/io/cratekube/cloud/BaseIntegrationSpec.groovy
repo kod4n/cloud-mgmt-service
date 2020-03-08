@@ -1,4 +1,4 @@
-package io.cratekube.example
+package io.cratekube.cloud
 
 import ru.vyarus.dropwizard.guice.test.spock.UseDropwizardApp
 import spock.lang.Specification
@@ -12,8 +12,15 @@ import javax.ws.rs.client.Invocation
  * Dropwizard application's API.
  */
 @UseDropwizardApp(value = App, hooks = IntegrationSpecHook, config = 'src/test/resources/testapp.yml')
-class BaseIntegrationSpec extends Specification {
+abstract class BaseIntegrationSpec extends Specification {
   @Inject Client client
+
+  /**
+   * Base path used for API requests. Can be overridden by classes extending this spec.
+   *
+   * @return the base API path for requests
+   */
+  abstract String getBaseRequestPath()
 
   /**
    * Creates a client invocation builder using the provided path.
@@ -21,7 +28,7 @@ class BaseIntegrationSpec extends Specification {
    * @param path {@code non-null} api path to call
    * @return an {@link Invocation.Builder} instance for the request
    */
-  Invocation.Builder baseRequest(String path = '') {
-    return client.target("http://localhost:9000${path}").request()
+  protected Invocation.Builder baseRequest(String path = '') {
+    return client.target("http://localhost:9000${baseRequestPath}${path}").request()
   }
 }
