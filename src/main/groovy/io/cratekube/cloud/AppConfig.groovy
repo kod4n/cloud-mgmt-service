@@ -1,5 +1,6 @@
 package io.cratekube.cloud
 
+import io.cratekube.auth.AuthConfig
 import io.dropwizard.Configuration
 import io.dropwizard.client.JerseyClientConfiguration
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration
@@ -20,6 +21,10 @@ class AppConfig extends Configuration {
    */
   @NotEmpty
   String provider
+
+  @Valid
+  @NotNull
+  AuthConfig auth
 
   @Valid
   @NotNull

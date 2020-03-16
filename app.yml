@@ -13,5 +13,11 @@ logging:
 
 provider: ${CLOUD_PROVIDER:-aws}
 
+auth:
+  api-keys:
+  - name: api-admin
+    key: ${ADMIN_APIKEY:-}
+    roles: ['admin']
+
 swagger:
   resourcePackage: io.cratekube.cloud.resources

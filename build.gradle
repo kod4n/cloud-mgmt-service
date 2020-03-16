@@ -25,7 +25,7 @@ repositories {
 }
 
 dependencies {
-  implementation 'org.codehaus.groovy:groovy:3.0.1'
+  implementation 'org.codehaus.groovy:groovy:3.0.2'
   implementation "io.dropwizard:dropwizard-core:${dropwizardVersion}"
   implementation "io.dropwizard:dropwizard-client:${dropwizardVersion}"
   implementation 'com.smoketurner:dropwizard-swagger:2.0.0-1'

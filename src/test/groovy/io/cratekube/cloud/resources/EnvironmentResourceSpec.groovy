@@ -1,6 +1,7 @@
 package io.cratekube.cloud.resources
 
 import io.cratekube.cloud.api.EnvironmentManager
+import io.cratekube.auth.User
 import io.cratekube.cloud.model.Environment
 import org.valid4j.errors.RequireViolation
 import spock.lang.PendingFeature
@@ -19,6 +20,7 @@ class EnvironmentResourceSpec extends Specification {
   EnvironmentManager environmentManager
 
   static final String ENV_NAME = 'test-env'
+  static final User TEST_USER = new User(name: 'test-user')
 
   def setup() {
     environmentManager = Mock(EnvironmentManager)
@@ -46,10 +48,16 @@ class EnvironmentResourceSpec extends Specification {
 
   def 'should require valid parameters for getEnvironmentById'() {
     when:
-    resource.getEnvironmentByName(null)
+    resource.getEnvironmentByName(user, envName)
 
     then:
     thrown RequireViolation
+
+    where:
+    user      | envName
+    null      | null
+    TEST_USER | null
+    TEST_USER | ''
   }
 
   @PendingFeature
@@ -59,7 +67,7 @@ class EnvironmentResourceSpec extends Specification {
     environmentManager.findByName(_) >> env
 
     when:
-    def result = resource.getEnvironmentByName(ENV_NAME)
+    def result = resource.getEnvironmentByName(TEST_USER, ENV_NAME)
 
     then:
     expect result, notNullValue()
@@ -68,10 +76,15 @@ class EnvironmentResourceSpec extends Specification {
 
   def 'should require valid parameters for createEnvironment'() {
     when:
-    resource.createEnvironment(null)
+    resource.createEnvironment(user, envReq)
 
     then:
     thrown RequireViolation
+
+    where:
+    user      | envReq
+    null      | null
+    TEST_USER | null
   }
 
   @PendingFeature
@@ -81,7 +94,7 @@ class EnvironmentResourceSpec extends Specification {
     environmentManager.findByName(_) >> env
 
     when:
-    def result = resource.createEnvironment(new EnvironmentResource.EnvironmentRequest(ENV_NAME))
+    def result = resource.createEnvironment(TEST_USER, new EnvironmentResource.EnvironmentRequest(ENV_NAME))
 
     then:
     expect result, notNullValue()
@@ -90,10 +103,16 @@ class EnvironmentResourceSpec extends Specification {
 
   def 'should require valid parameters for deleteEnvironmentById'() {
     when:
-    resource.deleteEnvironmentByName(null)
+    resource.deleteEnvironmentByName(user, envName)
 
     then:
     thrown RequireViolation
+
+    where:
+    user      | envName
+    null      | null
+    TEST_USER | null
+    TEST_USER | ''
   }
 
   @PendingFeature
@@ -103,7 +122,7 @@ class EnvironmentResourceSpec extends Specification {
     environmentManager.findByName(_) >> env
 
     when:
-    def result = resource.deleteEnvironmentByName(ENV_NAME)
+    def result = resource.deleteEnvironmentByName(TEST_USER, ENV_NAME)
 
     then:
     expect result, notNullValue()

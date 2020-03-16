@@ -3,7 +3,10 @@ package io.cratekube.cloud.resources
 import groovy.transform.Immutable
 import groovy.util.logging.Slf4j
 import io.cratekube.cloud.api.EnvironmentManager
+import io.cratekube.auth.ApiAuth
+import io.cratekube.auth.User
 import io.cratekube.cloud.model.Environment
+import io.dropwizard.auth.Auth
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiParam
 
@@ -45,9 +48,22 @@ class EnvironmentResource {
    * @return list of environments, can be empty
    */
   @GET
-  List<Environment> getEnvironments() {
-    log.debug '[list-env] listing all environments'
+  List<Environment> getEnvironments(@ApiAuth User user) {
+    log.debug '[list-env] user [{}] listing all environments', user.name
     return []
+  }
+
+  /**
+   * Creates a new environment using the provided request object.
+   *
+   * @param envRequest {@code non-null} request object
+   * @return
+   */
+  @POST
+  Environment createEnvironment(@ApiAuth User user, @ApiParam EnvironmentRequest envRequest) {
+    require envRequest, notNullValue()
+    log.debug '[create-env] user [{}] creating environment {}', user.name, envRequest
+    return null
   }
 
   /**
@@ -58,24 +74,10 @@ class EnvironmentResource {
    * @return the found environment, otherwise a 404 response
    */
   @GET
-  @Path('{environmentId}')
-  Environment getEnvironmentByName(@PathParam('environmentName') String environmentName) {
+  @Path('{environmentName}')
+  Environment getEnvironmentByName(@ApiAuth User user, @PathParam('environmentName') String environmentName) {
     require environmentName, notEmptyString()
-    log.debug '[get-env-by-id] getting environment {}', environmentName
-    return null
-  }
-
-  /**
-   * Creates a new environment using the provided request object.
-   *
-   * @param envRequest {@code non-null} request object
-   * @return
-   */
-  @POST
-  @Path('{environmentId}')
-  Environment createEnvironment(@ApiParam EnvironmentRequest envRequest) {
-    require envRequest, notNullValue()
-    log.debug '[create-env] creating environment {}', envRequest
+    log.debug '[get-env-by-id] user [{}] getting environment {}', user.name, environmentName
     return null
   }
 
@@ -87,10 +89,10 @@ class EnvironmentResource {
    * @return 201 response on successful deletion
    */
   @DELETE
-  @Path('{environmentId}')
-  Response deleteEnvironmentByName(@PathParam('environmentName') String environmentName) {
+  @Path('{environmentName}')
+  Response deleteEnvironmentByName(@ApiAuth User user, @PathParam('environmentName') String environmentName) {
     require environmentName, notEmptyString()
-    log.debug '[delete-env-by-id] deleting environment {}', environmentName
+    log.debug '[delete-env-by-id] user [{}] deleting environment {}', user.name, environmentName
     return null
   }
 

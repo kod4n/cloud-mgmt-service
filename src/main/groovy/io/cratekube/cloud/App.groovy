@@ -1,5 +1,6 @@
 package io.cratekube.cloud
 
+import io.cratekube.auth.ApiKeyAuthBundle
 import io.cratekube.cloud.modules.ProductionModule
 import io.dropwizard.Application
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor
@@ -35,6 +36,9 @@ class App extends Application<AppConfig> {
           return configuration.swagger
         }
       }
+
+      // add authc/authz
+      addBundle new ApiKeyAuthBundle((AppConfig config) -> config.auth)
 
       // configures the application to use Guice for dependency injection
       addBundle GuiceBundle.builder()
