@@ -1,5 +1,6 @@
 package io.cratekube.cloud
 
+import org.spockframework.mock.MockUtil
 import ru.vyarus.dropwizard.guice.test.spock.ConfigOverride
 import ru.vyarus.dropwizard.guice.test.spock.UseDropwizardApp
 import spock.lang.Specification
@@ -26,12 +27,28 @@ import javax.ws.rs.core.HttpHeaders
 abstract class BaseIntegrationSpec extends Specification {
   @Inject Client client
 
+  MockUtil mockUtil = new MockUtil()
+
+  def setup() {
+    requiredMocks.each { mockUtil.attachMock(it, this) }
+  }
+
   /**
    * Base path used for API requests. Can be overridden by classes extending this spec.
    *
    * @return the base API path for requests
    */
   abstract String getBaseRequestPath()
+
+  /**
+   * List of mocked objects that should be attached to this specification.
+   * Attaching of required mocks happens during the {@code setup} method for this specification.
+   *
+   * @return list of interfaces to attach
+   */
+  protected List<Object> getRequiredMocks() {
+    return []
+  }
 
   /**
    * Creates a client invocation builder using the provided path.

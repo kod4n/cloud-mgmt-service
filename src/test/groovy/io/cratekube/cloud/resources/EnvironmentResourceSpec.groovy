@@ -1,7 +1,7 @@
 package io.cratekube.cloud.resources
 
-import io.cratekube.cloud.api.EnvironmentManager
 import io.cratekube.auth.User
+import io.cratekube.cloud.api.EnvironmentManager
 import io.cratekube.cloud.model.Environment
 import org.valid4j.errors.RequireViolation
 import spock.lang.PendingFeature
@@ -10,7 +10,9 @@ import spock.lang.Subject
 
 import javax.ws.rs.core.Response
 
+import static org.hamcrest.Matchers.empty
 import static org.hamcrest.Matchers.equalTo
+import static org.hamcrest.Matchers.hasSize
 import static org.hamcrest.Matchers.notNullValue
 import static spock.util.matcher.HamcrestSupport.expect
 
@@ -38,12 +40,61 @@ class EnvironmentResourceSpec extends Specification {
     thrown RequireViolation
   }
 
-  def 'should verify example response'() {
+  @PendingFeature
+  def 'should return empty list from manager'() {
+    given:
+    environmentManager.all >> []
+
     when:
-    def result = resource.environments
+    def result = resource.getEnvironments(TEST_USER)
+
+    then:
+    verifyAll(result) {
+      expect it, notNullValue()
+      expect size(), empty()
+    }
+  }
+
+  @PendingFeature
+  def 'should return populated list when manager has results'() {
+    given:
+    environmentManager.all >> [new Environment(id: UUID.randomUUID(), name: 'test-env')]
+
+    when:
+    def result = resource.getEnvironments(TEST_USER)
+
+    then:
+    verifyAll(result) {
+      expect it, hasSize(1)
+      expect first().name, equalTo('test-env')
+    }
+  }
+
+  def 'should require valid parameters for createEnvironment'() {
+    when:
+    resource.createEnvironment(user, envReq)
+
+    then:
+    thrown RequireViolation
+
+    where:
+    user      | envReq
+    null      | null
+    TEST_USER | null
+  }
+
+  @PendingFeature
+  def 'should return accepted response when manager creates environment'() {
+    given:
+    def env = new Environment(id: UUID.randomUUID(), name: ENV_NAME)
+    environmentManager.findByName(_) >> env
+
+    when:
+    def result = resource.createEnvironment(TEST_USER, new EnvironmentResource.EnvironmentRequest(ENV_NAME))
 
     then:
     expect result, notNullValue()
+    expect result.status, equalTo(Response.Status.ACCEPTED)
   }
 
   def 'should require valid parameters for getEnvironmentById'() {
@@ -61,7 +112,7 @@ class EnvironmentResourceSpec extends Specification {
   }
 
   @PendingFeature
-  def 'should return environment from manager for getEnvironmentById'() {
+  def 'should return present optional when manager returns a result'() {
     given:
     def env = new Environment(name: ENV_NAME)
     environmentManager.findByName(_) >> env
@@ -70,35 +121,26 @@ class EnvironmentResourceSpec extends Specification {
     def result = resource.getEnvironmentByName(TEST_USER, ENV_NAME)
 
     then:
-    expect result, notNullValue()
-    expect result.name, equalTo(env.name)
-  }
-
-  def 'should require valid parameters for createEnvironment'() {
-    when:
-    resource.createEnvironment(user, envReq)
-
-    then:
-    thrown RequireViolation
-
-    where:
-    user      | envReq
-    null      | null
-    TEST_USER | null
+    verifyAll(result) {
+      expect present, equalTo(true)
+      expect get(), notNullValue()
+      expect get().name, equalTo(ENV_NAME)
+    }
   }
 
   @PendingFeature
-  def 'should return environment from manager for createEnvironment'() {
+  def 'should return empty optional when manager returns null'() {
     given:
-    def env = new Environment(id: UUID.randomUUID(), name: ENV_NAME)
-    environmentManager.findByName(_) >> env
+    environmentManager.findByName(_) >> null
 
     when:
-    def result = resource.createEnvironment(TEST_USER, new EnvironmentResource.EnvironmentRequest(ENV_NAME))
+    def result = resource.getEnvironmentByName(TEST_USER, ENV_NAME)
 
     then:
-    expect result, notNullValue()
-    expect result.name, equalTo(env.name)
+    verifyAll(result) {
+      expect it, notNullValue()
+      expect present, equalTo(false)
+    }
   }
 
   def 'should require valid parameters for deleteEnvironmentById'() {
@@ -116,7 +158,7 @@ class EnvironmentResourceSpec extends Specification {
   }
 
   @PendingFeature
-  def 'should return 201 response when environment is deleted'() {
+  def 'should return 202 response when environment is deleted'() {
     given:
     def env = new Environment(id: UUID.randomUUID(), name: ENV_NAME)
     environmentManager.findByName(_) >> env

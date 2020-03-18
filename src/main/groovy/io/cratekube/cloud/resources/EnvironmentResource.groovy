@@ -6,7 +6,6 @@ import io.cratekube.cloud.api.EnvironmentManager
 import io.cratekube.auth.ApiAuth
 import io.cratekube.auth.User
 import io.cratekube.cloud.model.Environment
-import io.dropwizard.auth.Auth
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiParam
 
@@ -35,11 +34,11 @@ import static org.valid4j.matchers.ArgumentMatchers.notEmptyString
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 class EnvironmentResource {
-  EnvironmentManager environments
+  EnvironmentManager envManager
 
   @Inject
-  EnvironmentResource(EnvironmentManager environments) {
-    this.environments = require environments, notNullValue()
+  EnvironmentResource(EnvironmentManager envManager) {
+    this.envManager = require envManager, notNullValue()
   }
 
   /**
@@ -55,12 +54,14 @@ class EnvironmentResource {
 
   /**
    * Creates a new environment using the provided request object.
+   * If no exception is thrown a 202 accepted response will be returned with the location
+   * for the resource.
    *
    * @param envRequest {@code non-null} request object
-   * @return
+   * @return 202 accepted response given no exception, otherwise a 4xx/5xx response depending on the exception
    */
   @POST
-  Environment createEnvironment(@ApiAuth User user, @ApiParam EnvironmentRequest envRequest) {
+  Response createEnvironment(@ApiAuth User user, @ApiParam EnvironmentRequest envRequest) {
     require envRequest, notNullValue()
     log.debug '[create-env] user [{}] creating environment {}', user.name, envRequest
     return null
@@ -75,18 +76,18 @@ class EnvironmentResource {
    */
   @GET
   @Path('{environmentName}')
-  Environment getEnvironmentByName(@ApiAuth User user, @PathParam('environmentName') String environmentName) {
+  Optional<Environment> getEnvironmentByName(@ApiAuth User user, @PathParam('environmentName') String environmentName) {
     require environmentName, notEmptyString()
     log.debug '[get-env-by-id] user [{}] getting environment {}', user.name, environmentName
     return null
   }
 
   /**
-   * Deletes and environment by name.  If the environment was successfully removed a 201
+   * Deletes and environment by name.  If the environment was successfully removed a 202
    * response will be returned.
    *
    * @param environmentName {@code non-empty} environment name
-   * @return 201 response on successful deletion
+   * @return 202 response on successful delete operation
    */
   @DELETE
   @Path('{environmentName}')
