@@ -2,9 +2,9 @@ package io.cratekube.cloud.resources
 
 import groovy.transform.Immutable
 import groovy.util.logging.Slf4j
-import io.cratekube.cloud.api.EnvironmentManager
 import io.cratekube.auth.ApiAuth
 import io.cratekube.auth.User
+import io.cratekube.cloud.api.EnvironmentManager
 import io.cratekube.cloud.model.Environment
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiParam

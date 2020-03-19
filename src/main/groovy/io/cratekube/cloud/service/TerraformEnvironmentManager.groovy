@@ -1,10 +1,13 @@
 package io.cratekube.cloud.service
 
+import io.cratekube.cloud.ServiceConfig
 import io.cratekube.cloud.api.EnvironmentManager
 import io.cratekube.cloud.api.ProcessExecutor
+import io.cratekube.cloud.api.TemplateProcessor
 import io.cratekube.cloud.model.Environment
 import io.cratekube.cloud.modules.annotation.TerraformCmd
 import io.cratekube.cloud.resources.EnvironmentResource.EnvironmentRequest
+import org.apache.commons.vfs2.FileSystemManager
 import ru.vyarus.dropwizard.guice.module.yaml.bind.Config
 
 import javax.inject.Inject
@@ -20,14 +23,19 @@ import static org.valid4j.matchers.ArgumentMatchers.notEmptyString
 class TerraformEnvironmentManager implements EnvironmentManager {
   ProcessExecutor terraform
   ExecutorService executorService
-  String cloudProvider
+  TemplateProcessor handlebarsProcessor
+  FileSystemManager fs
+  ServiceConfig serviceConfig
 
   @Inject
   TerraformEnvironmentManager(@TerraformCmd ProcessExecutor terraform, ExecutorService executorService,
-                              @Config('provider') String cloudProvider) {
+                              TemplateProcessor handlebarsProcessor, FileSystemManager fs,
+                              @Config ServiceConfig serviceConfig) {
     this.terraform = require terraform, notNullValue()
     this.executorService = require executorService, notNullValue()
-    this.cloudProvider = require cloudProvider, notEmptyString()
+    this.handlebarsProcessor = require handlebarsProcessor, notNullValue()
+    this.fs = require fs, notNullValue()
+    this.serviceConfig = require serviceConfig, notNullValue()
   }
 
   @Override
@@ -49,7 +57,7 @@ class TerraformEnvironmentManager implements EnvironmentManager {
   @Override
   Optional<Environment> findByName(String environmentName) {
     require environmentName, notEmptyString()
-    return Optional.empty()
+    return null
   }
 
   @Override

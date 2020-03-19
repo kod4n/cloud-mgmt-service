@@ -1,5 +1,6 @@
 package io.cratekube.cloud
 
+import groovy.transform.Immutable
 import io.cratekube.auth.AuthConfig
 import io.dropwizard.Configuration
 import io.dropwizard.client.JerseyClientConfiguration
@@ -15,6 +16,21 @@ import javax.validation.constraints.NotNull
 class AppConfig extends Configuration {
   JerseyClientConfiguration jerseyClient
 
+  @Valid
+  @NotNull
+  AuthConfig auth
+
+  @Valid
+  @NotNull
+  ServiceConfig service
+
+  @Valid
+  @NotNull
+  SwaggerBundleConfiguration swagger
+}
+
+@Immutable
+class ServiceConfig {
   /**
    * Represents the cloud this service is operating in.
    * Currently, this will only be {@code aws}.
@@ -22,11 +38,10 @@ class AppConfig extends Configuration {
   @NotEmpty
   String provider
 
-  @Valid
-  @NotNull
-  AuthConfig auth
-
-  @Valid
-  @NotNull
-  SwaggerBundleConfiguration swagger
+  /**
+   * Path to configuration directory.  This directory is used to store terraform state
+   * for environments.
+   */
+  @NotEmpty
+  String configDir
 }
