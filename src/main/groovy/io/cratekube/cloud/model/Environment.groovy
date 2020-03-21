@@ -24,6 +24,11 @@ class Environment {
   String provider
 
   /**
+   * Status for the environment
+   */
+  Status status
+
+  /**
    * List of managed resources for this environment.
    */
   List<ManagedResource> resources

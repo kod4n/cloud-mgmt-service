@@ -6,6 +6,18 @@
 
 A service to manage cloud resources
 
+## How this app works
+This application has terraform [files](src/main/resources/terraform) and [templates](src/main/resources/terraform/templates)
+that can be found the resources directory for the project.  These terraform files are used to initialize terraform
+directories when environments are created.
+
+After the required terraform files are created an environment directory is initialized with `terraform init`.  A plan is
+generated for all the required resources and and then applied via terraform.  Accessing state for environments is accomplished
+using `terraform state` calls.  Destroying environments is accomplished through `terraform destroy`.
+
+In order for terraform calls to be successful environment variables for `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`
+must be provided when running the application.
+
 ## Configuration
 Internal and external services are configured by extending the Dropwizard application configuration with additional
 settings. An environment variable parser is used to allow configuration settings to be overridden at runtime. 

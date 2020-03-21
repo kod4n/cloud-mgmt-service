@@ -23,7 +23,6 @@ class EnvironmentResourceIntegrationSpec extends BaseIntegrationSpec {
 
   @Inject EnvironmentManager environmentManager
 
-  @PendingFeature
   def 'should get list response when executing GET'() {
     given:
     environmentManager.all >> [new Environment(id: UUID.randomUUID(), name: TEST_ENV)]
@@ -53,7 +52,6 @@ class EnvironmentResourceIntegrationSpec extends BaseIntegrationSpec {
     }
   }
 
-  @PendingFeature
   def 'should return accepted response when creating an environment'() {
     given:
     environmentManager.create(notNullValue()) >> new Environment(id: UUID.randomUUID(), name: TEST_ENV)
@@ -64,11 +62,10 @@ class EnvironmentResourceIntegrationSpec extends BaseIntegrationSpec {
     then:
     verifyAll(result) {
       expect it, notNullValue()
-      expect status, equalTo(Response.Status.ACCEPTED)
+      expect status, equalTo(Response.Status.ACCEPTED.statusCode)
     }
   }
 
-  @PendingFeature
   def 'should return environment when found by manager'() {
     given:
     environmentManager.findByName(TEST_ENV) >> Optional.of(new Environment(id: UUID.randomUUID(), name: TEST_ENV))
@@ -79,13 +76,12 @@ class EnvironmentResourceIntegrationSpec extends BaseIntegrationSpec {
 
     then:
     verifyAll(result) {
-      expect status, equalTo(Response.Status.OK)
+      expect status, equalTo(Response.Status.OK.statusCode)
       expect env.id, notNullValue(UUID)
       expect env.name, equalTo(TEST_ENV)
     }
   }
 
-  @PendingFeature
   def 'should return not found response when environment cannot be found by manager'() {
     given:
     environmentManager.findByName(TEST_ENV) >> Optional.empty()
@@ -94,16 +90,15 @@ class EnvironmentResourceIntegrationSpec extends BaseIntegrationSpec {
     def result = baseRequest("/${TEST_ENV}").get()
 
     then:
-    expect result.status, equalTo(Response.Status.NOT_FOUND)
+    expect result.status, equalTo(Response.Status.NOT_FOUND.statusCode)
   }
 
-  @PendingFeature
   def 'should 204 no content response when no exception occurs on delete'() {
     when:
     def result = baseRequest("/${TEST_ENV}").delete()
 
     then:
     1 * environmentManager.deleteByName(TEST_ENV)
-    expect result.status, equalTo(Response.Status.ACCEPTED)
+    expect result.status, equalTo(Response.Status.ACCEPTED.statusCode)
   }
 }

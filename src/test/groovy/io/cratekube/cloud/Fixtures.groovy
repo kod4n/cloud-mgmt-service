@@ -8,7 +8,7 @@ final class Fixtures {
   public static final String TEST_APIKEY = 'test-token'
   public static final User TEST_USER = new User(name: 'test-user')
 
-  static EnvironmentRequest envRequest(Map options) {
+  static EnvironmentRequest envRequest(Map options = [:]) {
     return new EnvironmentRequest(name: options.name ?: TEST_ENV)
   }
 }

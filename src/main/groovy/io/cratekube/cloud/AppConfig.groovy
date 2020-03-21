@@ -44,4 +44,10 @@ class ServiceConfig {
    */
   @NotEmpty
   String configDir
+
+  /**
+   * Value of the ssh public key to be used
+   */
+  @NotEmpty
+  String sshPublicKey
 }

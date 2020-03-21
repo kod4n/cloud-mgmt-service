@@ -10,8 +10,10 @@ import spock.lang.Subject
 
 import javax.ws.rs.core.Response
 
+import static org.hamcrest.Matchers.allOf
 import static org.hamcrest.Matchers.empty
 import static org.hamcrest.Matchers.equalTo
+import static org.hamcrest.Matchers.hasProperty
 import static org.hamcrest.Matchers.hasSize
 import static org.hamcrest.Matchers.notNullValue
 import static spock.util.matcher.HamcrestSupport.expect
@@ -40,7 +42,6 @@ class EnvironmentResourceSpec extends Specification {
     thrown RequireViolation
   }
 
-  @PendingFeature
   def 'should return empty list from manager'() {
     given:
     environmentManager.all >> []
@@ -49,13 +50,9 @@ class EnvironmentResourceSpec extends Specification {
     def result = resource.getEnvironments(TEST_USER)
 
     then:
-    verifyAll(result) {
-      expect it, notNullValue()
-      expect size(), empty()
-    }
+    expect result, allOf(notNullValue(), empty())
   }
 
-  @PendingFeature
   def 'should return populated list when manager has results'() {
     given:
     environmentManager.all >> [new Environment(id: UUID.randomUUID(), name: 'test-env')]
@@ -83,18 +80,17 @@ class EnvironmentResourceSpec extends Specification {
     TEST_USER | null
   }
 
-  @PendingFeature
   def 'should return accepted response when manager creates environment'() {
     given:
     def env = new Environment(id: UUID.randomUUID(), name: ENV_NAME)
-    environmentManager.findByName(_) >> env
+    environmentManager.create(hasProperty('name', equalTo(ENV_NAME))) >> env
 
     when:
     def result = resource.createEnvironment(TEST_USER, new EnvironmentResource.EnvironmentRequest(ENV_NAME))
 
     then:
     expect result, notNullValue()
-    expect result.status, equalTo(Response.Status.ACCEPTED)
+    expect result.status, equalTo(Response.Status.ACCEPTED.statusCode)
   }
 
   def 'should require valid parameters for getEnvironmentById'() {
@@ -111,11 +107,10 @@ class EnvironmentResourceSpec extends Specification {
     TEST_USER | ''
   }
 
-  @PendingFeature
   def 'should return present optional when manager returns a result'() {
     given:
     def env = new Environment(name: ENV_NAME)
-    environmentManager.findByName(_) >> env
+    environmentManager.findByName(_) >> Optional.of(env)
 
     when:
     def result = resource.getEnvironmentByName(TEST_USER, ENV_NAME)
@@ -128,10 +123,9 @@ class EnvironmentResourceSpec extends Specification {
     }
   }
 
-  @PendingFeature
   def 'should return empty optional when manager returns null'() {
     given:
-    environmentManager.findByName(_) >> null
+    environmentManager.findByName(_) >> Optional.empty()
 
     when:
     def result = resource.getEnvironmentByName(TEST_USER, ENV_NAME)
@@ -157,7 +151,6 @@ class EnvironmentResourceSpec extends Specification {
     TEST_USER | ''
   }
 
-  @PendingFeature
   def 'should return 202 response when environment is deleted'() {
     given:
     def env = new Environment(id: UUID.randomUUID(), name: ENV_NAME)
@@ -168,6 +161,6 @@ class EnvironmentResourceSpec extends Specification {
 
     then:
     expect result, notNullValue()
-    expect result.status, equalTo(Response.Status.ACCEPTED)
+    expect result.status, equalTo(Response.Status.ACCEPTED.statusCode)
   }
 }

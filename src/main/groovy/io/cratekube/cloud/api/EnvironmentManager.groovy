@@ -41,7 +41,7 @@ interface EnvironmentManager {
    * @param environmentName {@code non-empty} name of environment
    * @throws EnvironmentNotFoundException
    */
-  void deleteByName(String environmentName)
+  void deleteByName(String environmentName) throws EnvironmentNotFoundException
 }
 
 @InheritConstructors class EnvironmentAlreadyExistsException extends NotAcceptableException {}
