@@ -2,7 +2,6 @@ package io.cratekube.cloud.service
 
 import com.github.jknack.handlebars.Handlebars
 import org.valid4j.errors.RequireViolation
-import spock.lang.PendingFeature
 import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Unroll
@@ -41,10 +40,9 @@ class HandlebarsTemplateProcessorSpec extends Specification {
     'some/path' | null
   }
 
-  @PendingFeature
   def 'should return parsed template when calling parse'() {
     given:
-    def filePath = 'templates/test'
+    def filePath = 'terraform/templates/test'
     def data = [name: 'spock-test']
 
     when:

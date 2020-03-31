@@ -49,7 +49,7 @@ class EnvironmentResource {
   @GET
   List<Environment> getEnvironments(@ApiAuth User user) {
     log.debug '[list-env] user [{}] listing all environments', user.name
-    return []
+    return envManager.all
   }
 
   /**
@@ -64,7 +64,8 @@ class EnvironmentResource {
   Response createEnvironment(@ApiAuth User user, @ApiParam EnvironmentRequest envRequest) {
     require envRequest, notNullValue()
     log.debug '[create-env] user [{}] creating environment {}', user.name, envRequest
-    return null
+    def env = envManager.create(envRequest)
+    return Response.accepted().location("/environment/${env.name}".toURI()).build()
   }
 
   /**
@@ -79,7 +80,7 @@ class EnvironmentResource {
   Optional<Environment> getEnvironmentByName(@ApiAuth User user, @PathParam('environmentName') String environmentName) {
     require environmentName, notEmptyString()
     log.debug '[get-env-by-id] user [{}] getting environment {}', user.name, environmentName
-    return null
+    return envManager.findByName(environmentName)
   }
 
   /**
@@ -94,7 +95,8 @@ class EnvironmentResource {
   Response deleteEnvironmentByName(@ApiAuth User user, @PathParam('environmentName') String environmentName) {
     require environmentName, notEmptyString()
     log.debug '[delete-env-by-id] user [{}] deleting environment {}', user.name, environmentName
-    return null
+    envManager.deleteByName(environmentName)
+    return Response.accepted().build()
   }
 
   /**

@@ -11,8 +11,11 @@ import io.cratekube.cloud.modules.annotation.TerraformCmd
 import io.cratekube.cloud.service.HandlebarsTemplateProcessor
 import io.cratekube.cloud.service.TerraformCommand
 import io.cratekube.cloud.service.TerraformEnvironmentManager
+import org.apache.commons.vfs2.FileSystemManager
+import org.apache.commons.vfs2.VFS
 import ru.vyarus.dropwizard.guice.module.support.DropwizardAwareModule
 
+import java.util.concurrent.Executor
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -25,7 +28,8 @@ class ProductionModule extends DropwizardAwareModule<AppConfig> {
     bind TemplateProcessor to HandlebarsTemplateProcessor
     bind ProcessExecutor annotatedWith TerraformCmd to TerraformCommand
     bind EnvironmentManager to TerraformEnvironmentManager
-    bind ExecutorService toInstance Executors.newFixedThreadPool(1)
+    bind FileSystemManager toInstance VFS.manager
+    bind Executor toInstance Executors.newCachedThreadPool()
   }
 
   @Provides
