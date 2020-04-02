@@ -1,15 +1,15 @@
 package io.cratekube.cloud.service
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.util.concurrent.MoreExecutors
 import io.cratekube.cloud.ServiceConfig
 import io.cratekube.cloud.api.EnvironmentAlreadyExistsException
 import io.cratekube.cloud.api.EnvironmentNotFoundException
-import io.cratekube.cloud.api.ProcessExecutor
-import io.cratekube.cloud.api.TemplateProcessor
+import io.cratekube.cloud.api.TerraformApi
+import io.cratekube.cloud.api.TerraformStateConverter
 import io.cratekube.cloud.model.Constants
 import io.cratekube.cloud.model.Status
-import io.dropwizard.jackson.Jackson
+import io.cratekube.cloud.model.terraform.TerraformInstance
+import io.cratekube.cloud.model.terraform.TerraformResource
 import org.apache.commons.vfs2.FileName
 import org.apache.commons.vfs2.FileObject
 import org.apache.commons.vfs2.FileSystemManager
@@ -22,54 +22,47 @@ import java.util.concurrent.Executor
 import static io.cratekube.cloud.Fixtures.TEST_ENV
 import static io.cratekube.cloud.Fixtures.envRequest
 import static org.hamcrest.Matchers.allOf
-import static org.hamcrest.Matchers.containsString
 import static org.hamcrest.Matchers.empty
 import static org.hamcrest.Matchers.equalTo
 import static org.hamcrest.Matchers.hasItem
 import static org.hamcrest.Matchers.hasProperty
 import static org.hamcrest.Matchers.hasSize
 import static org.hamcrest.Matchers.notNullValue
-import static org.valid4j.matchers.ArgumentMatchers.notEmptyString
 import static spock.util.matcher.HamcrestSupport.expect
 
 class TerraformEnvironmentManagerSpec extends Specification {
   @Subject
   TerraformEnvironmentManager manager
 
-  ProcessExecutor terraform
   Executor executor
-  TemplateProcessor templateProcessor
+  TerraformApi terraform
+  TerraformStateConverter terraformStateConverter
   FileSystemManager fs
-  ObjectMapper objectMapper
   ServiceConfig serviceConfig
 
   def setup() {
-    terraform = Mock()
-    executor = Mock()
-    templateProcessor = Mock()
-    fs = Mock()
     executor = MoreExecutors.directExecutor()
+    terraform = Mock()
+    terraformStateConverter = new DefaultTerraformStateConverter()
+    fs = Mock()
     serviceConfig = new ServiceConfig('aws', '/tmp/cloud-mgmt-config', 'test-ssh-key')
-    manager = new TerraformEnvironmentManager(
-      terraform, executor, templateProcessor, fs, Jackson.newObjectMapper(), serviceConfig
-    )
+    manager = new TerraformEnvironmentManager(executor, terraform, terraformStateConverter, fs, serviceConfig)
   }
 
   def 'should require valid constructor parameters'() {
     when:
-    new TerraformEnvironmentManager(terraformProc, excutor, tmplProcessor, fsm, om, svcConfig)
+    new TerraformEnvironmentManager(excutor, terraformApi, terraformState, fsm, svcConfig)
 
     then:
     thrown RequireViolation
 
     where:
-    terraformProc  | excutor       | tmplProcessor          | fsm     | om                | svcConfig
-    null           | null          | null                   | null    | null              | null
-    this.terraform | null          | null                   | null    | null              | null
-    this.terraform | this.executor | null                   | null    | null              | null
-    this.terraform | this.executor | this.templateProcessor | null    | null              | null
-    this.terraform | this.executor | this.templateProcessor | this.fs | null              | null
-    this.terraform | this.executor | this.templateProcessor | this.fs | this.objectMapper | null
+    excutor       | terraformApi   | terraformState               | fsm     | svcConfig
+    null          | null           | null                         | null    | null
+    this.executor | null           | null                         | null    | null
+    this.executor | this.terraform | null                         | null    | null
+    this.executor | this.terraform | this.terraformStateConverter | null    | null
+    this.executor | this.terraform | this.terraformStateConverter | this.fs | null
   }
 
   def 'should require valid parameters for create'() {
@@ -98,25 +91,15 @@ class TerraformEnvironmentManagerSpec extends Specification {
   def 'should return resources from terraform plan when creating environment'() {
     given:
     def envRequest = envRequest()
-    def envDir = "${serviceConfig.configDir}${Constants.ENV_CONFIG_PATH}/${envRequest.name}"
-    fs.resolveFile(envDir) >> Stub(FileObject) {
+    def envDir = Mock(FileObject) {
       exists() >> false
     }
-    fs.resolveFile('res:terraform/templates') >> Stub(FileObject) {
-      getChildren() >> []
-    }
-    fs.resolveFile('res:terraform') >> Stub(FileObject) {
-      getChildren() >> []
-    }
-    fs.resolveFile("${envDir}/env.plan") >> Stub(FileObject)
+    fs.resolveFile(_) >> envDir
 
     when:
     def result = manager.create(envRequest)
 
     then:
-    1 * terraform.exec(_, containsString('init'), *_) >> GroovyMock(Process)
-    1 * terraform.exec(_, containsString('plan'), *_) >> GroovyMock(Process)
-    1 * terraform.exec(_, containsString('apply'), *_) >> GroovyMock(Process)
     verifyAll(result) {
       expect it, notNullValue()
       expect name, equalTo(envRequest.name)
@@ -128,26 +111,18 @@ class TerraformEnvironmentManagerSpec extends Specification {
   def 'should call appropriate api methods creating environment'() {
     given:
     def envRequest = envRequest()
-    def envDir = "${serviceConfig.configDir}${Constants.ENV_CONFIG_PATH}/${envRequest.name}"
-    fs.resolveFile(envDir) >> Stub(FileObject) {
+    def envDir = Mock(FileObject) {
       exists() >> false
     }
-    fs.resolveFile('res:terraform/templates') >> Stub(FileObject) {
-      getChildren() >> []
-    }
-    fs.resolveFile('res:terraform') >> Stub(FileObject) {
-      getChildren() >> []
-    }
-    fs.resolveFile("${envDir}/env.plan") >> Stub(FileObject)
+    fs.resolveFile(_) >> envDir
 
     when:
     manager.create(envRequest)
 
     then:
-    _ * templateProcessor.parseFile(notEmptyString(), notNullValue())
-    1 * terraform.exec(_, containsString('init'), *_) >> GroovyMock(Process)
-    1 * terraform.exec(_, containsString('plan'), *_) >> GroovyMock(Process)
-    1 * terraform.exec(_, containsString('apply'), *_) >> GroovyMock(Process)
+    1 * envDir.createFolder()
+    1 * terraform.init(envDir)
+    1 * terraform.apply(envDir)
   }
 
   def 'should return empty list when filesystem cannot resolve environment directory'() {
@@ -165,36 +140,43 @@ class TerraformEnvironmentManagerSpec extends Specification {
     expect result, empty()
   }
 
-  def 'should return all environments based on output from terraform state'() {
+  def 'should return all environments based on output from terraform state converter'() {
     given:
-    String envDir = "${serviceConfig.configDir}${Constants.ENV_CONFIG_PATH}"
-    fs.resolveFile(envDir) >> Mock(FileObject) {
+    def envDir = Mock(FileObject) {
       exists() >> true
-      getChildren() >> [fileObjectStub(baseName: 'foo'), fileObjectStub(baseName: 'bar')].toArray()
+      getChildren() >> [fileObjectStub(baseName: 'test-env')].toArray()
     }
+    fs.resolveFile(_) >> envDir
 
-    def tfState = getClass().getResource('/fixtures/tf_state.json').text
-    terraform.exec(_, containsString('state'), *_) >> GroovyMock(Process) {
-      waitForProcessOutput(_, _) >> { Appendable out, Appendable err ->
-        out.append(tfState)
-      }
-    }
+    terraform.state(envDir) >> [
+      new TerraformResource(name: 'foo', provider: 'provider.aws', type: 'aws_instance', instances: [
+        new TerraformInstance(attributes: [id: 'foo_instance_1', tags: [Name: 'foo'], public_dns: 'dns.value.1', public_ip: 'x.x.x.x'])
+      ]),
+      new TerraformResource(name: 'bar', provider: 'provider.aws', type: 'aws_instance', instances: [
+        new TerraformInstance(attributes: [id: 'bar_instance_1', tags: [Name: 'bar'], public_dns: 'dns.value.2', public_ip: 'y.y.y.y'])
+      ])
+    ]
 
     when:
     def result = manager.all
+    def env = result.first()
 
     then:
-    expect result, hasSize(2)
-    expect result, hasItem(allOf(
-      hasProperty('name', equalTo('foo')),
-      hasProperty('provider', equalTo(serviceConfig.provider)),
-      hasProperty('resources', hasSize(2))
-    ))
-    expect result, hasItem(allOf(
-      hasProperty('name', equalTo('bar')),
-      hasProperty('provider', equalTo(serviceConfig.provider)),
-      hasProperty('resources', hasSize(2))
-    ))
+    verifyAll(env) {
+      expect name, equalTo('test-env')
+      expect provider, equalTo(serviceConfig.provider)
+      expect resources, hasSize(2)
+      expect resources, hasItem(allOf(
+        hasProperty('id', equalTo('foo_instance_1')),
+        hasProperty('name', equalTo('foo')),
+        hasProperty('type', equalTo('aws_instance'))
+      ))
+      expect resources, hasItem(allOf(
+        hasProperty('id', equalTo('bar_instance_1')),
+        hasProperty('name', equalTo('bar')),
+        hasProperty('type', equalTo('aws_instance'))
+      ))
+    }
   }
 
   def 'should require valid parameters for findByName'() {
@@ -225,15 +207,16 @@ class TerraformEnvironmentManagerSpec extends Specification {
 
   def 'should return environment data based on terraform state during findByName'() {
     given:
-    String envDir = "${serviceConfig.configDir}${Constants.ENV_CONFIG_PATH}/${TEST_ENV}"
-    fs.resolveFile(envDir) >> fileObjectStub(baseName: TEST_ENV)
+    fs.resolveFile(_) >> fileObjectStub(baseName: TEST_ENV)
 
-    def tfState = getClass().getResource('/fixtures/tf_state.json').text
-    terraform.exec(_, containsString('state'), *_) >> GroovyMock(Process) {
-      waitForProcessOutput(_, _) >> { Appendable out, Appendable err ->
-        out.append(tfState)
-      }
-    }
+    terraform.state(_) >> [
+      new TerraformResource(name: 'foo', provider: 'provider.aws', type: 'aws_instance', instances: [
+        new TerraformInstance(attributes: [id: 'foo_instance_1', tags: [Name: 'foo'], public_dns: 'dns.value.1', public_ip: 'x.x.x.x'])
+      ]),
+      new TerraformResource(name: 'bar', provider: 'provider.aws', type: 'aws_instance', instances: [
+        new TerraformInstance(attributes: [id: 'bar_instance_1', tags: [Name: 'bar'], public_dns: 'dns.value.2', public_ip: 'y.y.y.y'])
+      ])
+    ]
 
     when:
     def result = manager.findByName(TEST_ENV)
@@ -246,11 +229,13 @@ class TerraformEnvironmentManagerSpec extends Specification {
       expect resources, hasSize(2)
       expect resources, hasItem(allOf(
         hasProperty('name', equalTo('foo')),
-        hasProperty('status', equalTo(Status.APPLIED)),
+        hasProperty('id', equalTo('foo_instance_1')),
+        hasProperty('type', equalTo('aws_instance'))
       ))
       expect resources, hasItem(allOf(
         hasProperty('name', equalTo('bar')),
-        hasProperty('status', equalTo(Status.APPLIED)),
+        hasProperty('id', equalTo('bar_instance_1')),
+        hasProperty('type', equalTo('aws_instance'))
       ))
     }
   }
@@ -268,14 +253,17 @@ class TerraformEnvironmentManagerSpec extends Specification {
 
   def 'should require invoke terraform destroy during deleteByName'() {
     given:
-    String envDir = "${serviceConfig.configDir}${Constants.ENV_CONFIG_PATH}/${TEST_ENV}"
-    fs.resolveFile(envDir) >> fileObjectStub(baseName: TEST_ENV)
+    def envDir = Mock(FileObject) {
+      exists() >> true
+      getChildren() >> [fileObjectStub(baseName: 'test-env')].toArray()
+    }
+    fs.resolveFile(_) >> envDir
 
     when:
     manager.deleteByName(TEST_ENV)
 
     then:
-    1 * terraform.exec(_, containsString('destroy'), *_) >> GroovyMock(Process)
+    1 * terraform.destroy(envDir)
   }
 
   def 'should throw EnvironmentNotFound exception if env not found during deleteByName'() {

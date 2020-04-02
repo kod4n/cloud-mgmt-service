@@ -1,4 +1,5 @@
-resource "aws_instance" "cratekube-ec2-instance" {
+resource "aws_instance" "cratekube-ec2-instances" {
+  count = var.instance-count
   ami = "ami-07ebfd5b3428b6f4d"
   instance_type = "t2.micro"
   subnet_id = aws_subnet.cratekube-subnet-1.id
@@ -6,7 +7,7 @@ resource "aws_instance" "cratekube-ec2-instance" {
   key_name = aws_key_pair.cratekube-key-pair.key_name
 
   tags = {
-    Name = "cratekube-ec2-instance-1"
+    Name = "cratekube-ec2-instance-${count.index + 1}"
   }
 }
 
