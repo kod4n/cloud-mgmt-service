@@ -55,7 +55,7 @@ class EnvironmentResourceSpec extends Specification {
 
   def 'should return populated list when manager has results'() {
     given:
-    environmentManager.all >> [new Environment(id: UUID.randomUUID(), name: 'test-env')]
+    environmentManager.all >> [new Environment(name: 'test-env')]
 
     when:
     def result = resource.getEnvironments(TEST_USER)
@@ -82,7 +82,7 @@ class EnvironmentResourceSpec extends Specification {
 
   def 'should return accepted response when manager creates environment'() {
     given:
-    def env = new Environment(id: UUID.randomUUID(), name: ENV_NAME)
+    def env = new Environment(name: ENV_NAME)
     environmentManager.create(hasProperty('name', equalTo(ENV_NAME))) >> env
 
     when:
@@ -153,7 +153,7 @@ class EnvironmentResourceSpec extends Specification {
 
   def 'should return 202 response when environment is deleted'() {
     given:
-    def env = new Environment(id: UUID.randomUUID(), name: ENV_NAME)
+    def env = new Environment(name: ENV_NAME)
     environmentManager.findByName(_) >> env
 
     when:

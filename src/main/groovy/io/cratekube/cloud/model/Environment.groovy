@@ -8,11 +8,6 @@ import groovy.transform.Immutable
 @Immutable
 class Environment {
   /**
-   * Internal identifier for this environment.
-   */
-  UUID id
-
-  /**
    * Name of the environment.
    */
   String name

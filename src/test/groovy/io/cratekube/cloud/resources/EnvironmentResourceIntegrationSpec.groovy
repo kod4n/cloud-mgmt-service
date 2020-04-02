@@ -25,7 +25,7 @@ class EnvironmentResourceIntegrationSpec extends BaseIntegrationSpec {
 
   def 'should get list response when executing GET'() {
     given:
-    environmentManager.all >> [new Environment(id: UUID.randomUUID(), name: TEST_ENV)]
+    environmentManager.all >> [new Environment(name: TEST_ENV)]
 
     when:
     def result = baseRequest().get(new GenericType<List<Environment>>() {})
@@ -54,7 +54,7 @@ class EnvironmentResourceIntegrationSpec extends BaseIntegrationSpec {
 
   def 'should return accepted response when creating an environment'() {
     given:
-    environmentManager.create(notNullValue()) >> new Environment(id: UUID.randomUUID(), name: TEST_ENV)
+    environmentManager.create(notNullValue()) >> new Environment(name: TEST_ENV)
 
     when:
     def result = baseRequest().post(json(new EnvironmentResource.EnvironmentRequest(TEST_ENV)))
@@ -68,7 +68,7 @@ class EnvironmentResourceIntegrationSpec extends BaseIntegrationSpec {
 
   def 'should return environment when found by manager'() {
     given:
-    environmentManager.findByName(TEST_ENV) >> Optional.of(new Environment(id: UUID.randomUUID(), name: TEST_ENV))
+    environmentManager.findByName(TEST_ENV) >> Optional.of(new Environment(name: TEST_ENV))
 
     when:
     def result = baseRequest("/${TEST_ENV}").get()
@@ -77,7 +77,6 @@ class EnvironmentResourceIntegrationSpec extends BaseIntegrationSpec {
     then:
     verifyAll(result) {
       expect status, equalTo(Response.Status.OK.statusCode)
-      expect env.id, notNullValue(UUID)
       expect env.name, equalTo(TEST_ENV)
     }
   }
