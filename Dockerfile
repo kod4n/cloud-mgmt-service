@@ -39,6 +39,13 @@ RUN ./gradlew --no-daemon jacocoTestReport coveralls
 ######################
 FROM openjdk:8u212-jre-alpine3.9 as package
 
+ARG TERRAFORM_VERSION=0.12.24
+
+RUN apk --no-cache add bash curl &&\
+    curl -o terraform_${TERRAFORM_VERSION}_linux_amd64.zip https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip &&\
+    unzip -d /bin/ terraform_${TERRAFORM_VERSION}_linux_amd64.zip &&\
+    rm terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+
 ## setup env var for the app name
 ENV CRATEKUBE_APP cloud-mgmt-service
 
