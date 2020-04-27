@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloud-mgmt-service
+spec:
+  type: NodePort
+  ports:
+    - port: 9000
+      targetPort: 9000
+      protocol: TCP
+      name: http
+  selector:
+    name: cloud-mgmt-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloud-mgmt-service-deployment
+spec:
+  selector:
+    matchLabels:
+      name: cloud-mgmt-service
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: cloud-mgmt-service
+    spec:
+      containers:
+        - name: cloud-mgmt-service
+          image: cratekube/cloud-mgmt-service:latest
+          ports:
+            - containerPort: 9000
+          env:
+            - name: ADMIN_APIKEY
+              value: admin-user
+            - name: CONFIG_DIR
+              value: /app/config
+            - name: SSH_PUBLIC_KEY
+              value: fix-me
