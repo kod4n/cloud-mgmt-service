@@ -7,14 +7,37 @@
 _A service to manage and monitor assets in cloud platforms_
 
 ## Introduction
-If you are unfamiliar with [CrateKube](https://github.com/cratekube/cratekube/blob/master/docs/Architecture.md), please read our [User Documentation for the Cloud Management Service](https://github.com/cratekube/cratekube/blob/master/docs/user/ServiceCloudManagement.md).  This microservice _can_ operate as an independent API, however it is designed as part of a [larger system](https://github.com/cratekube/cratekube/blob/master/docs/Architecture.md) that addresses the following [requirements](https://github.com/cratekube/cratekube/blob/master/docs/Requirements.md) in order to provide a hybrid-cloud management platform that is [default-secure](https://github.com/cratekube/cratekube/blob/master/docs/Requirements.md#automatic-container-hardening) and [ephemeral](https://github.com/cratekube/cratekube/blob/master/docs/Requirements.md#read-only-container-file-systems) with [elastic provisioning](https://github.com/cratekube/cratekube/blob/master/docs/Requirements.md#elastic-provisioning), [hardened pod security policies](https://github.com/cratekube/cratekube/blob/master/docs/Requirements.md#pod-security-policies), self-healing [event-driven architecture](https://github.com/cratekube/cratekube/blob/master/docs/Requirements.md#event-based-control-plane-automation), and [persistent EBS backed storage](https://github.com/cratekube/cratekube/blob/master/docs/Requirements.md#persistent-storage).
+This **_cloud management service_** is part of an [MVaP architecture](https://github.com/cratekube/cratekube/blob/master/docs/Architecture.md) and set of [requirements](https://github.com/cratekube/cratekube/blob/master/docs/Requirements.md) for [CrateKube](https://cratekube.github.io/) that creates infrastructure [VPC](https://aws.amazon.com/vpc/)s, bootstraps, and configures [Kubernetes](https://kubernetes.io/) clusters on AWS [EC2](https://aws.amazon.com/ec2/pricing/) using [CloudFormation](https://aws.amazon.com/cloudformation/) templates and [Terraform](https://www.terraform.io/).  The underlying objective of our product is to provide default secure, ephemeral, cloud-ready instances that will launch on [AWS](https://aws.amazon.com/ec2/).  
 
 ## Quick links
-- [User documentation](https://github.com/cratekube/cratekube/blob/master/docs/user/ServiceCloudManagement.md) for the `cloud-mgmt-service`
-- CrateKube [operator documentation](http://cratekube.github.io)
-- [System Architecture](https://github.com/cratekube/cratekube/blob/master/docs/Architecture.md) and high-level [Requirements](https://github.com/cratekube/cratekube/blob/master/docs/Requirements.md)
+- CrateKube [website](http://cratekube.github.io)
+- [System architecture](https://github.com/cratekube/cratekube/blob/master/docs/Architecture.md) and high-level [requirements](https://github.com/cratekube/cratekube/blob/master/docs/Requirements.md)
 - [How to contribute](https://github.com/cratekube/cratekube/blob/master/CONTRIBUTING.md) 
 - Contributor [architecture](https://github.com/cratekube/cratekube/blob/master/contributing/Architecture%20Guidelines.md), [roles and responsibilities](https://github.com/cratekube/cratekube/blob/master/docs/RolesAndResponsibilities.md), and [developer documentation](https://github.com/cratekube/cratekube/blob/master/docs/Development.md)
+
+## What does this service do?
+The cloud-mgmt-service is in charge of provisioning and monitoring all cloud resources and services. Cloud resources are loosely defined as managed virtual infrastructure, or "Infrastructure as code".
+
+In AWS, this is expected to provision any and all resources necessary to prepare for the creation of a [Kubernetes cluster](https://kubernetes.io/docs/tutorials/kubernetes-basics/create-cluster/), including but not limited to [IAM](https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html), [VPC](https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html), [EC2 instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/concepts.html), [subnets](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Subnets.html#vpc-subnet-basics), [security groups](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html), and security policies. 
+
+When utilized as a component, this service can act as a stand-alone service for creating infrastructure as code, and can be easily extended by forking and [developing](https://github.com/cratekube/cratekube/blob/master/docs/Development.md) as a [CrateKube contributor](https://github.com/cratekube/cratekube/blob/master/CONTRIBUTING.md).
+
+## Quickstart
+To run this service, simply execute:
+```bash
+docker run -p 8080:9000 -v /home/user/tfstate:/app/config -d cratekube/cloud-mgmt-service
+```
+# Development 
+
+## Configuration
+The DropWizard [app.yml](https://github.com/cratekube/cloud-mgmt-service/blob/master/app.yml) can be configured dynamically using environment variables:
+
+```html
+$ CONFIG_DIR=/app/config
+$ SSH_PUBLIC_KEY=<public key>
+$ ADMIN_APIKEY=<api key>
+```
+These environment variables are the preferred method of configuration at runtime.
 
 ## How this app works
 This application has terraform [files](src/main/resources/terraform) and [templates](src/main/resources/terraform/templates)
@@ -28,12 +51,33 @@ using `terraform state` calls.  Destroying environments is accomplished through 
 In order for terraform calls to be successful environment variables for `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`
 must be provided when running the application.
 
-## Configuration
-Internal and external services are configured by extending the Dropwizard application configuration with additional
-settings. An environment variable parser is used to allow configuration settings to be overridden at runtime. 
-These configuration options can be seen in the [app config file](app.yml).
+### Building with Docker
+We strive to have our builds repeatable across development environments so we also provide a Docker build to generate 
+the Dropwizard application container.  The examples below should be executed from the root of the project.
 
-## Local development
+##### Run the base docker build:
+```bash
+docker build -t cloud-mgmt-service:local --target build .
+```
+Note: This requires docker 19.03.x or above.  Docker 18.09 will throw errors for mount points and the `--target` flag.
+
+##### Build the package target:
+```bash
+docker build -t cloud-mgmt-service:local --target package .
+```
+
+##### Run the docker application locally on port 8080:
+```bash
+docker run -p 8080:9000 -v /home/user/tfstate:/app/config -d cloud-mgmt-service:local
+```
+Note: We are bind mounting the `/home/user/tfstate` directory inside of the container to preserve the state of the Terraform installation locally on the host.  If you don't do that, whenever your container dies you will lose your infrastructure state files.  **That's bad!**  _Without state, the next time Terraform runs it could remove infrastructure it doesn't know it exists._
+
+If you don't want to preserve state, you can just remove the volume flag.
+
+##### Fire up the Swagger specification by visiting the following URL in a browser:
+```bash
+http://localhost:8080/swagger
+```
 
 ### Gradle builds
 This project uses [gradle](https://github.com/gradle/gradle) for building and testing.  We also use the gradle wrapper
@@ -49,29 +93,42 @@ After you have generated the fat jar you can run your application with java usin
 java -jar build/libs/cloud-mgmt-service-1.0.0-SNAPSHOT-all.jar
 ```
 
-### Docker builds
-We strive to have our builds repeatable across development environments so we also provide a Docker build to generate 
-the Dropwizard application container.  The examples below should be executed from the root of the project.
+# Running the app
 
-Run the base docker build:
-```bash
-docker build -t cloud-mgmt-service:build --target build .
-```
-Note: This requires docker 19.03.x or above.  Docker 18.09 will throw errors for mount points and the `--target` flag.
+### Running on AWS
+This microservice can also run on an Amazon EC2 instance:
+- Find an [Ubuntu Cloud AMI](https://cloud-images.ubuntu.com/locator/ec2/) and spin it up in your AWS EC2 console.
+- [Install Docker](https://docs.docker.com/engine/install/ubuntu/) 
+- [Push](https://docs.docker.com/docker-hub/) your locally built docker image to a registry
+- [Configure](https://github.com/cratekube/cratekube/blob/master/docs/user/ServiceCloudManagement.md#configuration) the necessary environment variables
+- Set up your [EC2 security groups](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-security-groups.html) to protect this app from the outside world
+- Pull the docker image from dockerhub i.e.- `docker pull yourUser/yourImage:tag`
+- [Run](https://github.com/cratekube/cratekube/blob/master/docs/user/ServiceCloudManagement.md#run-the-docker-application-locally-on-port-8080) the container
 
-Build the package target:
+The cloud management service will become available at:
+```html
+http://<ec2 instance public dns name>:8080/swagger
 ```
-docker build -t cloud-mgmt-service:package --target package .
-```
-Run the docker application locally on port 8080:
-```bash
-docker run -p 8080:9000 -d cloud-mgmt-service:package
-```
+### Requirements for deployment on AWS
+- Requires SuperUser permission to an AWS account using the IAM keys of your choice.   
+- Terraform templates will need to have configuration options that support the compliance rules implemented in the [policy-mgmt-service](https://github.com/cratekube/policy-mgmt-service). 
+- The state files generated by Terraform must be persisted.  If running this service on EC2, you must persist the data in a volume in order for Docker to attach to it and save the state.
 
-Fire up the Swagger specification by visiting the following URL in a browser:
-```bash
-http://localhost:8080/swagger
-```
+## Using the API
+The API has endpoints that allow you to create, read, and delete environments.  In order for these operations to be successful, your app.yml file must have been properly configured to utilize your AWS account with the appropriate key.  That API key must have access to all the resources necessary to configure a full VPC.
+
+The resulting operations exist as REST endpoints, which you can simply hit in your browser or with a tool such as [Postman](https://www.postman.com/downloads/).
+
+| HTTP Verb | Endpoint | Payload | Authentication| Function |
+| --- | --- | --- | --- | --- |
+| GET | /environment | None | API Bearer Token | Get a list of all environments |
+| POST | /environment | <code>{ "name": "string"}</code>  | API Bearer Token | Create an environment by specifying a name |
+| GET | /environment/{environmentName} | None | None | Get a specific environment by name |
+| DELETE | /environment/{environmentName} | None | None | Delete a specific environment by name |
+
+## API Documentation
+The API docs for this project are powered by the Swagger Specification. After starting up the application the available
+APIs can be found at `http://localhost:<configured port>/swagger`
 
 ## Using the API client
 This application generates a client for the Dropwizard application by using the swagger specification.  The maven asset
@@ -91,10 +148,6 @@ Maven:
   <version>1.0.0</version>
 </dependency>
 ```
-
-## API Documentation
-The API docs for this project are powered by the Swagger Specification. After starting up the application the available
-APIs can be found at `http://localhost:<configured port>/swagger`
 
 ## Contributing
 If you are interested in contributing to this project please review the [contribution guidelines](https://github.com/cratekube/cratekube/blob/master/CONTRIBUTING.md).
