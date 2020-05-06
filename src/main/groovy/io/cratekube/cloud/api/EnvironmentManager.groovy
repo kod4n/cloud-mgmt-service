@@ -18,8 +18,9 @@ interface EnvironmentManager {
    * @param environmentRequest {@code non-null} request object
    * @return {@code non-null} environment object
    * @throws EnvironmentAlreadyExistsException
+   * @throws EnvironmentOperationPendingException
    */
-  Environment create(EnvironmentRequest environmentRequest) throws EnvironmentAlreadyExistsException
+  Environment create(EnvironmentRequest environmentRequest) throws EnvironmentAlreadyExistsException, EnvironmentOperationPendingException
 
   /**
    * Finds all environments that have been requested for provisioning.
@@ -41,9 +42,11 @@ interface EnvironmentManager {
    *
    * @param environmentName {@code non-empty} name of environment
    * @throws EnvironmentNotFoundException
+   * @throws EnvironmentOperationPendingException
    */
-  void deleteByName(String environmentName) throws EnvironmentNotFoundException
+  void deleteByName(String environmentName) throws EnvironmentNotFoundException, EnvironmentOperationPendingException
 }
 
 @InheritConstructors class EnvironmentAlreadyExistsException extends NotAcceptableException {}
 @InheritConstructors class EnvironmentNotFoundException extends NotFoundException {}
+@InheritConstructors class EnvironmentOperationPendingException extends NotAcceptableException {}

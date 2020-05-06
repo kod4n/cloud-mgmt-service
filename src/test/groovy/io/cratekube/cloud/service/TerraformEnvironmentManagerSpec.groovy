@@ -4,9 +4,11 @@ import com.google.common.util.concurrent.MoreExecutors
 import io.cratekube.cloud.ServiceConfig
 import io.cratekube.cloud.api.EnvironmentAlreadyExistsException
 import io.cratekube.cloud.api.EnvironmentNotFoundException
+import io.cratekube.cloud.api.EnvironmentOperationPendingException
 import io.cratekube.cloud.api.TerraformApi
 import io.cratekube.cloud.api.TerraformStateConverter
 import io.cratekube.cloud.model.Constants
+import io.cratekube.cloud.model.Environment
 import io.cratekube.cloud.model.Status
 import io.cratekube.cloud.model.terraform.TerraformInstance
 import io.cratekube.cloud.model.terraform.TerraformResource
@@ -25,6 +27,7 @@ import static org.hamcrest.Matchers.allOf
 import static org.hamcrest.Matchers.empty
 import static org.hamcrest.Matchers.equalTo
 import static org.hamcrest.Matchers.hasItem
+import static org.hamcrest.Matchers.hasKey
 import static org.hamcrest.Matchers.hasProperty
 import static org.hamcrest.Matchers.hasSize
 import static org.hamcrest.Matchers.notNullValue
@@ -39,6 +42,7 @@ class TerraformEnvironmentManagerSpec extends Specification {
   TerraformStateConverter terraformStateConverter
   FileSystemManager fs
   ServiceConfig serviceConfig
+  Map<String, Environment> environmentCache
 
   def setup() {
     executor = MoreExecutors.directExecutor()
@@ -46,23 +50,25 @@ class TerraformEnvironmentManagerSpec extends Specification {
     terraformStateConverter = new DefaultTerraformStateConverter()
     fs = Mock()
     serviceConfig = new ServiceConfig('aws', '/tmp/cloud-mgmt-config', 'test-ssh-key')
-    manager = new TerraformEnvironmentManager(executor, terraform, terraformStateConverter, fs, serviceConfig)
+    environmentCache = [:]
+    manager = new TerraformEnvironmentManager(executor, terraform, terraformStateConverter, fs, serviceConfig, environmentCache)
   }
 
   def 'should require valid constructor parameters'() {
     when:
-    new TerraformEnvironmentManager(excutor, terraformApi, terraformState, fsm, svcConfig)
+    new TerraformEnvironmentManager(excutor, terraformApi, terraformState, fsm, svcConfig, envCache)
 
     then:
     thrown RequireViolation
 
     where:
-    excutor       | terraformApi   | terraformState               | fsm     | svcConfig
-    null          | null           | null                         | null    | null
-    this.executor | null           | null                         | null    | null
-    this.executor | this.terraform | null                         | null    | null
-    this.executor | this.terraform | this.terraformStateConverter | null    | null
-    this.executor | this.terraform | this.terraformStateConverter | this.fs | null
+    excutor       | terraformApi   | terraformState               | fsm     | svcConfig          | envCache
+    null          | null           | null                         | null    | null               | null
+    this.executor | null           | null                         | null    | null               | null
+    this.executor | this.terraform | null                         | null    | null               | null
+    this.executor | this.terraform | this.terraformStateConverter | null    | null               | null
+    this.executor | this.terraform | this.terraformStateConverter | this.fs | null               | null
+    this.executor | this.terraform | this.terraformStateConverter | this.fs | this.serviceConfig | null
   }
 
   def 'should require valid parameters for create'() {
@@ -88,23 +94,56 @@ class TerraformEnvironmentManagerSpec extends Specification {
     thrown EnvironmentAlreadyExistsException
   }
 
-  def 'should return resources from terraform plan when creating environment'() {
+  def 'should throw exception when calling create for pending environment'() {
+    given:
+    environmentCache[TEST_ENV] = new Environment(status: Status.PENDING)
+
+    when:
+    manager.create(envRequest())
+
+    then:
+    thrown EnvironmentOperationPendingException
+  }
+
+  def 'should return resources from terraform state when creating environment'() {
     given:
     def envRequest = envRequest()
-    def envDir = Mock(FileObject) {
-      exists() >> false
-    }
+
+    // must not exist initially, but must have basename for subsequent calls
+    def envDir = fileObjectStub(exists: false, baseName: TEST_ENV)
     fs.resolveFile(_) >> envDir
+
+    // mocked for cache population done in executor
+    terraform.state(_) >> [
+      new TerraformResource(name: 'foo', provider: 'provider.aws', type: 'aws_instance', instances: [
+        new TerraformInstance(attributes: [id: 'foo_instance_1', tags: [Name: 'foo'], public_dns: 'dns.value.1', public_ip: 'x.x.x.x'])
+      ]),
+      new TerraformResource(name: 'bar', provider: 'provider.aws', type: 'aws_instance', instances: [
+        new TerraformInstance(attributes: [id: 'bar_instance_1', tags: [Name: 'bar'], public_dns: 'dns.value.2', public_ip: 'y.y.y.y'])
+      ])
+    ]
 
     when:
     def result = manager.create(envRequest)
 
     then:
+    expect environmentCache, hasKey(TEST_ENV)
+    expect environmentCache[TEST_ENV], hasProperty('status', equalTo(Status.APPLIED))
     verifyAll(result) {
       expect it, notNullValue()
-      expect name, equalTo(envRequest.name)
+      expect name, equalTo(TEST_ENV)
       expect provider, equalTo(serviceConfig.provider)
-      expect status, equalTo(Status.PENDING)
+      expect resources, hasSize(2)
+      expect resources, hasItem(allOf(
+        hasProperty('id', equalTo('foo_instance_1')),
+        hasProperty('name', equalTo('foo')),
+        hasProperty('type', equalTo('aws_instance'))
+      ))
+      expect resources, hasItem(allOf(
+        hasProperty('id', equalTo('bar_instance_1')),
+        hasProperty('name', equalTo('bar')),
+        hasProperty('type', equalTo('aws_instance'))
+      ))
     }
   }
 
@@ -113,8 +152,21 @@ class TerraformEnvironmentManagerSpec extends Specification {
     def envRequest = envRequest()
     def envDir = Mock(FileObject) {
       exists() >> false
+      getName() >> Mock(FileName) {
+        getBaseName() >> TEST_ENV
+      }
     }
     fs.resolveFile(_) >> envDir
+
+    // mocked for cache population done in executor
+    def tfState = [
+      new TerraformResource(name: 'foo', provider: 'provider.aws', type: 'aws_instance', instances: [
+        new TerraformInstance(attributes: [id: 'foo_instance_1', tags: [Name: 'foo'], public_dns: 'dns.value.1', public_ip: 'x.x.x.x'])
+      ]),
+      new TerraformResource(name: 'bar', provider: 'provider.aws', type: 'aws_instance', instances: [
+        new TerraformInstance(attributes: [id: 'bar_instance_1', tags: [Name: 'bar'], public_dns: 'dns.value.2', public_ip: 'y.y.y.y'])
+      ])
+    ]
 
     when:
     manager.create(envRequest)
@@ -123,9 +175,10 @@ class TerraformEnvironmentManagerSpec extends Specification {
     1 * envDir.createFolder()
     1 * terraform.init(envDir)
     1 * terraform.apply(envDir)
+    1 * terraform.state(envDir) >> tfState
   }
 
-  def 'should return empty list when filesystem cannot resolve environment directory'() {
+  def 'should return empty list when filesystem cannot resolve environment directory and cache is empty'() {
     given:
     String envDir = "${serviceConfig.configDir}${Constants.ENV_CONFIG_PATH}"
     fs.resolveFile(envDir) >> Stub(FileObject) {
@@ -276,6 +329,17 @@ class TerraformEnvironmentManagerSpec extends Specification {
 
     then:
     thrown EnvironmentNotFoundException
+  }
+
+  def 'should throw exception when calling deleteByName for pending environment'() {
+    given:
+    environmentCache[TEST_ENV] = new Environment(status: Status.PENDING)
+
+    when:
+    manager.deleteByName(TEST_ENV)
+
+    then:
+    thrown EnvironmentOperationPendingException
   }
 
   // Helper methods for common stubs and mocks //
