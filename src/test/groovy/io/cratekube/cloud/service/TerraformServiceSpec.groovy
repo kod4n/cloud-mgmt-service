@@ -31,7 +31,7 @@ class TerraformServiceSpec extends Specification {
     fs = Mock()
     terraform = Mock()
     templateProcessor = Mock()
-    serviceConfig = new ServiceConfig('aws', '/tmp/cloud-mgmt-config', 'test-ssh-key')
+    serviceConfig = new ServiceConfig('aws', '/tmp/cloud-mgmt-config', 'test-ssh-key-path')
     subject = new TerraformService(fs, Jackson.newObjectMapper(), terraform, templateProcessor, serviceConfig)
   }
 

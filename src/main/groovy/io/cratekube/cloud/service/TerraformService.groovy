@@ -51,7 +51,7 @@ class TerraformService implements TerraformApi {
     def templates = fs.resolveFile('res:terraform/templates').children.findAll { it.file }
     templates.each {
       def fileName = it.name.baseName.trim() - '.hbs'
-      def parsedFile = handlebarsProcessor.parseFile("terraform/templates/${fileName}", [publicKey: serviceConfig.sshPublicKey])
+      def parsedFile = handlebarsProcessor.parseFile("terraform/templates/${fileName}", [publicKeyPath: serviceConfig.sshPublicKeyPath])
       def configFile = directory.resolveFile(fileName)
       // setup the file content and persist
       configFile.content.outputStream.withWriter { it.write(parsedFile) }
