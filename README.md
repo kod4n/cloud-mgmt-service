@@ -22,22 +22,37 @@ In AWS, this is expected to provision any and all resources necessary to prepare
 
 When utilized as a component, this service can act as a stand-alone service for creating infrastructure as code, and can be easily extended by forking and [developing](https://github.com/cratekube/cratekube/blob/master/docs/Development.md) as a [CrateKube contributor](https://github.com/cratekube/cratekube/blob/master/CONTRIBUTING.md).
 
-## Quickstart
-To run this service, simply execute:
-```bash
-docker run -p 8080:9000 -v /home/user/tfstate:/app/config -d cratekube/cloud-mgmt-service
-```
+
 # Development 
 
 ## Configuration
 The DropWizard [app.yml](https://github.com/cratekube/cloud-mgmt-service/blob/master/app.yml) can be configured dynamically using environment variables:
 
+Example environment variable file:
+
 ```html
 $ CONFIG_DIR=/app/config
 $ SSH_PUBLIC_KEY=<public key>
 $ ADMIN_APIKEY=<api key>
+$ AWS_ACCESS_KEY_ID=<value>
+$ AWS_SECRET_ACCESS_KEY=<value>
+
 ```
+CONFIG_DIR specifies the path to configuration directory.  This directory is used to store terraform state for environments.
+
+SSH_PUBLIC_KEY is the public key for the host where this service is deployed.
+
+ADMIN_APIKEY is the bearer token that will be used to authenticate CrateKube platform services. 
+
+The AWS keys are your AWS ID and KEY with permissions to configure a full VPC
+
 These environment variables are the preferred method of configuration at runtime.
+
+## Quickstart
+To run this service, simply execute:
+```bash
+docker run -p 8080:9000 --env-file /path/to/envfile -v /home/user/tfstate:/app/config -d cratekube/cloud-mgmt-service
+```
 
 ## How this app works
 This application has terraform [files](src/main/resources/terraform) and [templates](src/main/resources/terraform/templates)
@@ -100,10 +115,10 @@ This microservice can also run on an Amazon EC2 instance:
 - Find an [Ubuntu Cloud AMI](https://cloud-images.ubuntu.com/locator/ec2/) and spin it up in your AWS EC2 console.
 - [Install Docker](https://docs.docker.com/engine/install/ubuntu/) 
 - [Push](https://docs.docker.com/docker-hub/) your locally built docker image to a registry
-- [Configure](https://github.com/cratekube/cratekube/blob/master/docs/user/ServiceCloudManagement.md#configuration) the necessary environment variables
+- [Configure](https://github.com/cratekube/cloud-mgmt-service#configuration) the necessary environment variables
 - Set up your [EC2 security groups](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-security-groups.html) to protect this app from the outside world
 - Pull the docker image from dockerhub i.e.- `docker pull yourUser/yourImage:tag`
-- [Run](https://github.com/cratekube/cratekube/blob/master/docs/user/ServiceCloudManagement.md#run-the-docker-application-locally-on-port-8080) the container
+- [Run](https://github.com/cratekube/cloud-mgmt-service#building-with-docker) the container
 
 The cloud management service will become available at:
 ```html

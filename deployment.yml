@@ -43,7 +43,10 @@ spec:
             - name: SSH_PUBLIC_KEY
               value: /app/kube/cratekube_rsa.pub
             - name: ADMIN_APIKEY
-              value: eknvDrmcDtseeieSMTvngo
+              valueFrom:
+                secretKeyRef:
+                  name: cratekube-api-secret
+                  key: admin-api-key
       volumes:
         - name: public-key-volume
           hostPath:
