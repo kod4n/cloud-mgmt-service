@@ -14,7 +14,7 @@ logging:
 service:
   provider: ${CLOUD_PROVIDER:-aws}
   configDir: ${CONFIG_DIR:-/app/config}
-  sshPublicKey: ${SSH_PUBLIC_KEY:-}
+  sshPublicKeyPath: ${SSH_PUBLIC_KEY_PATH:-}
 
 auth:
   api-keys:

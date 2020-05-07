@@ -13,5 +13,5 @@ resource "aws_instance" "cratekube-ec2-instances" {
 
 resource "aws_key_pair" "cratekube-key-pair" {
   key_name = "cratekube-key-pair"
-  public_key = var.cratekube-public-key
+  public_key = "${file(var.cratekube-public-key-path)}"
 }

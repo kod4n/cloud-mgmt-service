@@ -32,7 +32,7 @@ Example environment variable file:
 
 ```html
 $ CONFIG_DIR=/app/config
-$ SSH_PUBLIC_KEY=<public key>
+$ SSH_PUBLIC_KEY_PATH=<public key path>
 $ ADMIN_APIKEY=<api key>
 $ AWS_ACCESS_KEY_ID=<value>
 $ AWS_SECRET_ACCESS_KEY=<value>
@@ -40,7 +40,7 @@ $ AWS_SECRET_ACCESS_KEY=<value>
 ```
 CONFIG_DIR specifies the path to configuration directory.  This directory is used to store terraform state for environments.
 
-SSH_PUBLIC_KEY is the public key for the host where this service is deployed.
+SSH_PUBLIC_KEY_PATH is the path to the public key for the host where this service is deployed.
 
 ADMIN_APIKEY is the bearer token that will be used to authenticate CrateKube platform services. 
 

@@ -40,7 +40,7 @@ spec:
             - mountPath: /app/config/
               name: config-volume
           env:
-            - name: SSH_PUBLIC_KEY
+            - name: SSH_PUBLIC_KEY_PATH
               value: /app/kube/cratekube_rsa.pub
             - name: ADMIN_APIKEY
               valueFrom:
