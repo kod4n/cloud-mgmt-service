@@ -7,6 +7,8 @@ import io.cratekube.auth.User
 import io.cratekube.cloud.api.EnvironmentManager
 import io.cratekube.cloud.model.Environment
 import io.swagger.annotations.Api
+import io.swagger.annotations.ApiImplicitParam
+import io.swagger.annotations.ApiImplicitParams
 import io.swagger.annotations.ApiParam
 
 import javax.inject.Inject
@@ -47,6 +49,9 @@ class EnvironmentResource {
    * @return list of environments, can be empty
    */
   @GET
+  @ApiImplicitParams(
+    @ApiImplicitParam(name = 'Authorization', value = 'API token', required = true, dataType = 'string', paramType = 'header')
+  )
   List<Environment> getEnvironments(@ApiAuth User user) {
     log.debug '[list-env] user [{}] listing all environments', user.name
     return envManager.all
@@ -61,6 +66,9 @@ class EnvironmentResource {
    * @return 202 accepted response given no exception, otherwise a 4xx/5xx response depending on the exception
    */
   @POST
+  @ApiImplicitParams(
+    @ApiImplicitParam(name = 'Authorization', value = 'API token', required = true, dataType = 'string', paramType = 'header')
+  )
   Response createEnvironment(@ApiAuth User user, @ApiParam EnvironmentRequest envRequest) {
     require envRequest, notNullValue()
     log.debug '[create-env] user [{}] creating environment {}', user.name, envRequest
@@ -77,6 +85,9 @@ class EnvironmentResource {
    */
   @GET
   @Path('{environmentName}')
+  @ApiImplicitParams(
+    @ApiImplicitParam(name = 'Authorization', value = 'API token', required = true, dataType = 'string', paramType = 'header')
+  )
   Optional<Environment> getEnvironmentByName(@ApiAuth User user, @PathParam('environmentName') String environmentName) {
     require environmentName, notEmptyString()
     log.debug '[get-env-by-id] user [{}] getting environment {}', user.name, environmentName
@@ -92,6 +103,9 @@ class EnvironmentResource {
    */
   @DELETE
   @Path('{environmentName}')
+  @ApiImplicitParams(
+    @ApiImplicitParam(name = 'Authorization', value = 'API token', required = true, dataType = 'string', paramType = 'header')
+  )
   Response deleteEnvironmentByName(@ApiAuth User user, @PathParam('environmentName') String environmentName) {
     require environmentName, notEmptyString()
     log.debug '[delete-env-by-id] user [{}] deleting environment {}', user.name, environmentName

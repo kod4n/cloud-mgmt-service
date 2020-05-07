@@ -9,6 +9,8 @@ import io.cratekube.cloud.api.ProcessExecutor
 import io.cratekube.cloud.api.TemplateProcessor
 import io.cratekube.cloud.api.TerraformApi
 import io.cratekube.cloud.api.TerraformStateConverter
+import io.cratekube.cloud.model.Environment
+import io.cratekube.cloud.modules.annotation.EnvironmentCache
 import io.cratekube.cloud.modules.annotation.TerraformCmd
 import io.cratekube.cloud.service.DefaultTerraformStateConverter
 import io.cratekube.cloud.service.HandlebarsTemplateProcessor
@@ -18,7 +20,9 @@ import io.cratekube.cloud.service.TerraformService
 import org.apache.commons.vfs2.FileSystemManager
 import org.apache.commons.vfs2.VFS
 import ru.vyarus.dropwizard.guice.module.support.DropwizardAwareModule
+import org.apache.commons.collections4.map.LRUMap
 
+import javax.inject.Singleton
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 
@@ -40,5 +44,12 @@ class ProductionModule extends DropwizardAwareModule<AppConfig> {
   @Provides
   static Handlebars handlebarsProvider() {
     return new Handlebars().with { registerHelpers StringHelpers }
+  }
+
+  @Provides
+  @EnvironmentCache
+  @Singleton
+  static Map<String, Environment> environmentCache() {
+    return new LRUMap<String, Environment>()
   }
 }
