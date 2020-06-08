@@ -14,7 +14,9 @@ logging:
 service:
   provider: ${CLOUD_PROVIDER:-aws}
   configDir: ${CONFIG_DIR:-/app/config}
-  sshPublicKeyPath: ${SSH_PUBLIC_KEY_PATH:-}
+
+aws:
+  keypair: ${AWS_KEYPAIR_NAME:-cratekube-keypair}
 
 auth:
   api-keys:

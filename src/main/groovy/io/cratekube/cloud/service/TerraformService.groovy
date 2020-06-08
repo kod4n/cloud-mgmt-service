@@ -2,7 +2,7 @@ package io.cratekube.cloud.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.util.logging.Slf4j
-import io.cratekube.cloud.ServiceConfig
+import io.cratekube.cloud.AwsConfig
 import io.cratekube.cloud.api.ProcessExecutor
 import io.cratekube.cloud.api.TemplateProcessor
 import io.cratekube.cloud.api.TerraformApi
@@ -30,16 +30,16 @@ class TerraformService implements TerraformApi {
   ObjectMapper objectMapper
   ProcessExecutor terraform
   TemplateProcessor handlebarsProcessor
-  ServiceConfig serviceConfig
+  AwsConfig awsConfig
 
   @Inject
   TerraformService(FileSystemManager fs, ObjectMapper objectMapper, @TerraformCmd ProcessExecutor terraform,
-                   TemplateProcessor handlebarsProcessor, @Config ServiceConfig serviceConfig) {
+                   TemplateProcessor handlebarsProcessor, @Config AwsConfig awsConfig) {
     this.fs = require fs, notNullValue()
     this.objectMapper = require objectMapper, notNullValue()
     this.terraform = require terraform, notNullValue()
     this.handlebarsProcessor = require handlebarsProcessor, notNullValue()
-    this.serviceConfig = require serviceConfig, notNullValue()
+    this.awsConfig = require awsConfig, notNullValue()
   }
 
   @Override
@@ -51,7 +51,7 @@ class TerraformService implements TerraformApi {
     def templates = fs.resolveFile('res:terraform/templates').children.findAll { it.file }
     templates.each {
       def fileName = it.name.baseName.trim() - '.hbs'
-      def parsedFile = handlebarsProcessor.parseFile("terraform/templates/${fileName}", [publicKeyPath: serviceConfig.sshPublicKeyPath])
+      def parsedFile = handlebarsProcessor.parseFile("terraform/templates/${fileName}", [keypairName: awsConfig.keypair])
       def configFile = directory.resolveFile(fileName)
       // setup the file content and persist
       configFile.content.outputStream.withWriter { it.write(parsedFile) }

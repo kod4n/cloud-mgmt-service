@@ -22,7 +22,6 @@ import javax.ws.rs.core.HttpHeaders
     @ConfigOverride(key = 'auth.api-keys[0].key', value = Fixtures.TEST_APIKEY),
     @ConfigOverride(key = 'jerseyClient.timeout', value = '5000ms'),
     @ConfigOverride(key = 'jerseyClient.gzipEnabledForRequests', value = 'false'),
-    @ConfigOverride(key = 'service.sshPublicKeyPath', value = 'test-ssh-key-path'),
   ]
 )
 abstract class BaseIntegrationSpec extends Specification {

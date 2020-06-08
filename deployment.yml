@@ -31,7 +31,7 @@ spec:
     spec:
       containers:
         - name: cloud-mgmt-service
-          image: cratekube/cloud-mgmt-service:1.0.0
+          image: cratekube/cloud-mgmt-service:latest # using latest until we cut a release
           ports:
             - containerPort: 9000
           volumeMounts:
@@ -40,17 +40,14 @@ spec:
             - mountPath: /app/config/
               name: config-volume
           env:
-            - name: SSH_PUBLIC_KEY_PATH
-              value: /app/kube/cratekube_rsa.pub
+            - name: AWS_KEYPAIR_NAME
+              value: cratekube-keypair
             - name: ADMIN_APIKEY
               valueFrom:
                 secretKeyRef:
                   name: cratekube-api-secret
                   key: admin-api-key
       volumes:
-        - name: public-key-volume
-          hostPath:
-            path: /var/lib/cratekube/cratekube_rsa.pub
         - name: config-volume
           hostPath:
             path: /var/lib/cratekube/cloud-mgmt-service/config/

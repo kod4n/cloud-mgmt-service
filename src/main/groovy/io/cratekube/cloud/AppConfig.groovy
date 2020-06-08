@@ -26,6 +26,10 @@ class AppConfig extends Configuration {
 
   @Valid
   @NotNull
+  AwsConfig aws
+
+  @Valid
+  @NotNull
   SwaggerBundleConfiguration swagger
 }
 
@@ -44,10 +48,13 @@ class ServiceConfig {
    */
   @NotEmpty
   String configDir
+}
 
+@Immutable
+class AwsConfig {
   /**
-   * Path of the ssh public key to be used
+   * Name of the keypair to be used when creating AWS EC2 instances.
    */
   @NotEmpty
-  String sshPublicKeyPath
+  String keypair
 }
