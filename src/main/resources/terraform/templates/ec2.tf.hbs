@@ -4,14 +4,9 @@ resource "aws_instance" "cratekube-ec2-instances" {
   instance_type = "t2.micro"
   subnet_id = aws_subnet.cratekube-subnet-1.id
   vpc_security_group_ids = ["${aws_security_group.cratekube-ssh-sg.id}"]
-  key_name = aws_key_pair.cratekube-key-pair.key_name
+  key_name = "{{{ keypairName }}}"
 
   tags = {
     Name = "cratekube-ec2-instance-${count.index + 1}"
   }
-}
-
-resource "aws_key_pair" "cratekube-key-pair" {
-  key_name = "cratekube-key-pair"
-  public_key = "${file(var.cratekube-public-key-path)}"
 }

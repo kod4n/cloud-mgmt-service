@@ -1,6 +1,6 @@
 package io.cratekube.cloud.service
 
-import io.cratekube.cloud.ServiceConfig
+import io.cratekube.cloud.AwsConfig
 import io.cratekube.cloud.api.ProcessExecutor
 import io.cratekube.cloud.api.TemplateProcessor
 import io.dropwizard.jackson.Jackson
@@ -25,25 +25,25 @@ class TerraformServiceSpec extends Specification {
   FileSystemManager fs
   ProcessExecutor terraform
   TemplateProcessor templateProcessor
-  ServiceConfig serviceConfig
+  AwsConfig awsConfig
 
   def setup() {
     fs = Mock()
     terraform = Mock()
     templateProcessor = Mock()
-    serviceConfig = new ServiceConfig('aws', '/tmp/cloud-mgmt-config', 'test-ssh-key-path')
-    subject = new TerraformService(fs, Jackson.newObjectMapper(), terraform, templateProcessor, serviceConfig)
+    awsConfig = new AwsConfig('test-keypair`')
+    subject = new TerraformService(fs, Jackson.newObjectMapper(), terraform, templateProcessor, awsConfig)
   }
 
   def 'should require valid constructor params'() {
     when:
-    new TerraformService(fsm, om, terraformProc, tmplProcessor, svcConfig)
+    new TerraformService(fsm, om, terraformProc, tmplProcessor, awsCfg)
 
     then:
     thrown RequireViolation
 
     where:
-    fsm     | om                        | terraformProc  | tmplProcessor          | svcConfig
+    fsm     | om                        | terraformProc  | tmplProcessor          | awsCfg
     null    | null                      | null           | null                   | null
     this.fs | null                      | null           | null                   | null
     this.fs | Jackson.newObjectMapper() | null           | null                   | null

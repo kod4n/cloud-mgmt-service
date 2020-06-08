@@ -49,7 +49,7 @@ class TerraformEnvironmentManagerSpec extends Specification {
     terraform = Mock()
     terraformStateConverter = new DefaultTerraformStateConverter()
     fs = Mock()
-    serviceConfig = new ServiceConfig('aws', '/tmp/cloud-mgmt-config', 'test-ssh-key')
+    serviceConfig = new ServiceConfig('aws', '/tmp/cloud-mgmt-config')
     environmentCache = [:]
     manager = new TerraformEnvironmentManager(executor, terraform, terraformStateConverter, fs, serviceConfig, environmentCache)
   }
