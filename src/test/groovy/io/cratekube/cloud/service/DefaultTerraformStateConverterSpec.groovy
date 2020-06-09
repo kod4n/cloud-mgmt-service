@@ -10,7 +10,7 @@ import spock.lang.Subject
 import static org.hamcrest.Matchers.allOf
 import static org.hamcrest.Matchers.empty
 import static org.hamcrest.Matchers.equalTo
-import static org.hamcrest.Matchers.hasProperty
+import static org.hamcrest.Matchers.hasEntry
 import static org.valid4j.matchers.ArgumentMatchers.notEmptyString
 import static spock.util.matcher.HamcrestSupport.expect
 
@@ -65,8 +65,8 @@ class DefaultTerraformStateConverterSpec extends Specification {
       expect type, equalTo('aws_instance')
       expect status, equalTo(Status.APPLIED)
       expect metadata, allOf(
-        hasProperty('publicDns', notEmptyString()),
-        hasProperty('publicIp', notEmptyString())
+        hasEntry(equalTo('publicDns'), notEmptyString()),
+        hasEntry(equalTo('publicIp'), notEmptyString())
       )
     }
   }
@@ -105,8 +105,8 @@ class DefaultTerraformStateConverterSpec extends Specification {
       expect type, equalTo('aws_instance')
       expect status, equalTo(Status.APPLIED)
       expect metadata, allOf(
-        hasProperty('publicDns', notEmptyString()),
-        hasProperty('publicIp', notEmptyString())
+        hasEntry(equalTo('publicDns'), notEmptyString()),
+        hasEntry(equalTo('publicIp'), notEmptyString())
       )
     }
     verifyAll(result[1]) {
@@ -115,8 +115,8 @@ class DefaultTerraformStateConverterSpec extends Specification {
       expect type, equalTo('aws_instance')
       expect status, equalTo(Status.APPLIED)
       expect metadata, allOf(
-        hasProperty('publicDns', notEmptyString()),
-        hasProperty('publicIp', notEmptyString())
+        hasEntry(equalTo('publicDns'), notEmptyString()),
+        hasEntry(equalTo('publicIp'), notEmptyString())
       )
     }
   }

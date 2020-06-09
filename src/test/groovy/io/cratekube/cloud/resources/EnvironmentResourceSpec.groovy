@@ -4,7 +4,6 @@ import io.cratekube.auth.User
 import io.cratekube.cloud.api.EnvironmentManager
 import io.cratekube.cloud.model.Environment
 import org.valid4j.errors.RequireViolation
-import spock.lang.PendingFeature
 import spock.lang.Specification
 import spock.lang.Subject
 
