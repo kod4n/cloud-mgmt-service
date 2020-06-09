@@ -3,7 +3,8 @@ package io.cratekube.cloud.resources
 import io.cratekube.cloud.BaseIntegrationSpec
 import io.cratekube.cloud.api.EnvironmentManager
 import io.cratekube.cloud.model.Environment
-import spock.lang.PendingFeature
+import io.cratekube.cloud.model.ManagedResource
+import io.cratekube.cloud.model.Status
 
 import javax.inject.Inject
 import javax.ws.rs.core.GenericType
@@ -68,16 +69,34 @@ class EnvironmentResourceIntegrationSpec extends BaseIntegrationSpec {
 
   def 'should return environment when found by manager'() {
     given:
-    environmentManager.findByName(TEST_ENV) >> Optional.of(new Environment(name: TEST_ENV))
+    environmentManager.findByName(TEST_ENV) >> Optional.of(new Environment(
+      name: TEST_ENV,
+      provider: 'aws',
+      status: Status.APPLIED,
+      resources: [
+        new ManagedResource(
+          id: 'i-123456',
+          name: 'test-instance',
+          type: 'aws_instance',
+          status: 'APPLIED',
+          metadata: [publicDns: 'host.test.com', publicIp: 'x.x.x.x']
+        )
+      ]
+    ))
 
     when:
     def result = baseRequest("/${TEST_ENV}").get()
     def env = result.readEntity(Environment)
 
     then:
+    def resource = env.resources.first()
     verifyAll(result) {
       expect status, equalTo(Response.Status.OK.statusCode)
       expect env.name, equalTo(TEST_ENV)
+      expect env.resources, hasSize(1)
+      expect resource.name, equalTo('test-instance')
+      expect resource.metadata.publicDns, equalTo('host.test.com')
+      expect resource.metadata.publicIp, equalTo('x.x.x.x')
     }
   }
 

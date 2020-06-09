@@ -26,7 +26,7 @@ class ManagedResource {
   Status status
 
   /**
-   * Configuration of the managed resource
+   * Additional metadata for a managed resource
    */
-  ResourceMetadata metadata
+  Map<String, Object> metadata
 }
