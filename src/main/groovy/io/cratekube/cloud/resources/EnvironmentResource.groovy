@@ -9,6 +9,7 @@ import io.cratekube.cloud.model.Environment
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiImplicitParam
 import io.swagger.annotations.ApiImplicitParams
+import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
 
 import javax.inject.Inject
@@ -85,6 +86,7 @@ class EnvironmentResource {
    */
   @GET
   @Path('{environmentName}')
+  @ApiOperation(value = 'getEnvironmentByName', response = Environment)
   @ApiImplicitParams(
     @ApiImplicitParam(name = 'Authorization', value = 'API token', required = true, dataType = 'string', paramType = 'header')
   )
