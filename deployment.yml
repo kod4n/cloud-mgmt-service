@@ -41,7 +41,7 @@ spec:
               name: config-volume
           env:
             - name: AWS_KEYPAIR_NAME
-              value: cratekube-keypair
+              value: cratekube-cluster
             - name: ADMIN_APIKEY
               valueFrom:
                 secretKeyRef:
